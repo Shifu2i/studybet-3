@@ -15,9 +15,9 @@ export const Leaderboard: React.FC = () => {
   const fetchLeaderboard = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('*')
-        .order('tokens', { ascending: false })
+        .order('balance', { ascending: false })
         .limit(10);
 
       if (error) throw error;
@@ -112,7 +112,7 @@ export const Leaderboard: React.FC = () => {
 
                   <div className="text-right">
                     <div className="text-3xl font-bold text-white mb-1">
-                      {user.tokens.toLocaleString()}
+                      {user.balance.toLocaleString()}
                     </div>
                     <div className="text-white/60 text-sm">tokens</div>
                   </div>

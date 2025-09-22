@@ -23,7 +23,7 @@ export const useUserProfile = () => {
 
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .select('*')
         .eq('id', authUser.id)
         .single();
@@ -52,13 +52,12 @@ export const useUserProfile = () => {
                       'User';
 
       const { data, error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .insert([
           {
             id: authUser.id,
             username,
-            email: authUser.email,
-            tokens: 100,
+            balance: 100,
             last_daily_reset: new Date().toISOString().split('T')[0],
           },
         ])
@@ -78,7 +77,7 @@ export const useUserProfile = () => {
     const today = new Date().toISOString().split('T')[0];
     const lastReset = profile.last_daily_reset;
 
-    if (lastReset !== today && profile.tokens < 100) {
+    if (lastReset !== today && profile.balance < 100) {
       await updateTokens(100, today);
     }
   };
@@ -87,13 +86,13 @@ export const useUserProfile = () => {
     if (!authUser || !profile) return;
 
     try {
-      const updateData: any = { tokens: newTokens };
+      const updateData: any = { balance: newTokens };
       if (resetDate) {
         updateData.last_daily_reset = resetDate;
       }
 
       const { data, error } = await supabase
-        .from('users')
+        .from('user_profiles')
         .update(updateData)
         .eq('id', authUser.id)
         .select()
@@ -108,7 +107,7 @@ export const useUserProfile = () => {
 
   const addTokens = async (tokensToAdd: number) => {
     if (!profile) return;
-    const newTotal = profile.tokens + tokensToAdd;
+    const newTotal = profile.balance + tokensToAdd;
     await updateTokens(newTotal);
   };
 
