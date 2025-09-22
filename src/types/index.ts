@@ -1,10 +1,12 @@
 export interface User {
   id: string;
   username: string;
-  email: string;
-  tokens: number;
-  created_at: string;
+  balance: number;
   last_daily_reset: string;
+  total_winnings: number;
+  games_played: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface SpinResult {
