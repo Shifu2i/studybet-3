@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useState } from 'react';
 import { AuthForm } from './components/Auth/AuthForm';
 import { GamePage } from './pages/GamePage';
 import { Leaderboard } from './components/Leaderboard/Leaderboard';

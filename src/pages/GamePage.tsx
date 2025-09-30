@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Coins, RotateCcw } from 'lucide-react';
+import { LogOut, Trophy, Coins } from 'lucide-react';
 import { SpinningWheel } from '../components/SpinningWheel/SpinningWheel';
 import { SearchBar } from '../components/SearchBar/SearchBar';
 import { QuestionModal } from '../components/QuestionModal/QuestionModal';
@@ -79,10 +79,10 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     setCanSpin(false);
   };
 
-  const handleQuestionAnswer = (answer: string, isCorrect: boolean) => {
+  const handleQuestionAnswer = (_answer: string, isCorrect: boolean) => {
     setShowQuestion(false);
     setCanSpin(isCorrect);
-    
+
     if (!isCorrect) {
       // Show another question if the answer was wrong
       setTimeout(() => {
@@ -106,10 +106,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     }, 2000);
   };
 
-  const handleSpinStart = () => {
-    setIsSpinning(true);
-    setCanSpin(false);
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -133,7 +129,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
               <div className="flex items-center gap-2">
                 <Coins className="w-5 h-5 text-yellow-400" />
                 <span className="text-white font-bold text-lg">
-                  {profile.tokens.toLocaleString()} tokens
+                  {profile.balance.toLocaleString()} tokens
                 </span>
               </div>
             </div>

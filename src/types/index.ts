@@ -1,7 +1,9 @@
 export interface User {
   id: string;
   username: string;
+  email?: string;
   balance: number;
+  tokens?: number;
   last_daily_reset: string;
   total_winnings: number;
   games_played: number;
