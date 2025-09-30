@@ -5,18 +5,18 @@ import { Leaderboard } from './components/Leaderboard/Leaderboard';
 import { useAuth } from './hooks/useAuth';
 
 function App() {
-  const { user, loading } = useAuth();
+  const { username, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState<'game' | 'leaderboard'>('game');
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
-  if (!user) {
+  if (!username) {
     return <AuthForm onSuccess={() => {}} />;
   }
 

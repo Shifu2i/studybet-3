@@ -113,14 +113,14 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 flex items-center justify-center">
         <div className="text-white text-xl">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 p-4">
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-8">
         <div className="flex justify-between items-center mb-6">

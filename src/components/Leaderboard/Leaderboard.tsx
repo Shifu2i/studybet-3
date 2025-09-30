@@ -57,7 +57,7 @@ export const Leaderboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 flex items-center justify-center">
         <div className="flex items-center gap-2 text-white">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
           <span className="text-xl">Loading leaderboard...</span>
@@ -67,7 +67,7 @@ export const Leaderboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 p-4">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -106,7 +106,6 @@ export const Leaderboard: React.FC = () => {
                     
                     <div>
                       <h3 className="text-xl font-bold text-white">{user.username}</h3>
-                      <p className="text-white/60">{user.email}</p>
                     </div>
                   </div>
 

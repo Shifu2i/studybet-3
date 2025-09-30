@@ -4,35 +4,34 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
 export const useUserProfile = () => {
-  const { user: authUser } = useAuth();
+  const { username } = useAuth();
   const [profile, setProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (authUser) {
+    if (username) {
       fetchProfile();
       checkDailyReset();
     } else {
       setProfile(null);
       setLoading(false);
     }
-  }, [authUser]);
+  }, [username]);
 
   const fetchProfile = async () => {
-    if (!authUser) return;
+    if (!username) return;
 
     try {
       const { data, error } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('id', authUser.id)
-        .single();
+        .eq('username', username)
+        .maybeSingle();
 
-      if (error && error.code === 'PGRST116') {
-        // User doesn't exist, create profile
+      if (error) throw error;
+
+      if (!data) {
         await createProfile();
-      } else if (error) {
-        throw error;
       } else {
         setProfile(data);
       }
@@ -44,25 +43,20 @@ export const useUserProfile = () => {
   };
 
   const createProfile = async () => {
-    if (!authUser) return;
+    if (!username) return;
 
     try {
-      const username = authUser.user_metadata?.username || 
-                      authUser.email?.split('@')[0] || 
-                      'User';
-
       const { data, error } = await supabase
         .from('user_profiles')
         .insert([
           {
-            id: authUser.id,
             username,
-            balance: 100,
+            balance: 1000,
             last_daily_reset: new Date().toISOString().split('T')[0],
           },
         ])
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setProfile(data);
@@ -72,18 +66,18 @@ export const useUserProfile = () => {
   };
 
   const checkDailyReset = async () => {
-    if (!authUser || !profile) return;
+    if (!username || !profile) return;
 
     const today = new Date().toISOString().split('T')[0];
     const lastReset = profile.last_daily_reset;
 
-    if (lastReset !== today && profile.balance < 100) {
-      await updateTokens(100, today);
+    if (lastReset !== today && profile.balance < 1000) {
+      await updateTokens(1000, today);
     }
   };
 
   const updateTokens = async (newTokens: number, resetDate?: string) => {
-    if (!authUser || !profile) return;
+    if (!username || !profile) return;
 
     try {
       const updateData: any = { balance: newTokens };
@@ -94,9 +88,9 @@ export const useUserProfile = () => {
       const { data, error } = await supabase
         .from('user_profiles')
         .update(updateData)
-        .eq('id', authUser.id)
+        .eq('username', username)
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       setProfile(data);
