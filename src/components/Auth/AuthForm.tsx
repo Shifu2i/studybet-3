@@ -25,12 +25,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
       return;
     }
 
-    if (username.length < 3) {
-      setError('Username must be at least 3 characters');
-      setLoading(false);
-      return;
-    }
-
     try {
       const { error } = await signIn(username.trim());
       if (error) throw error;
@@ -74,7 +68,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
               onChange={(e) => setUsername(e.target.value)}
               className="w-full bg-white/10 border border-white/20 rounded-lg pl-10 pr-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-cyan-500"
               required
-              minLength={3}
             />
           </div>
 

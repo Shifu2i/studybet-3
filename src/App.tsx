@@ -17,7 +17,7 @@ function App() {
   }
 
   if (!username) {
-    return <AuthForm onSuccess={() => {}} />;
+    return <AuthForm onSuccess={() => window.location.reload()} />;
   }
 
   return (

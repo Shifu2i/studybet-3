@@ -25,7 +25,7 @@ export const useAuth = () => {
       setUsername(usernameInput);
       return { error: null };
     } catch (error: any) {
-      return { error };
+      return { error: error };
     }
   };
 

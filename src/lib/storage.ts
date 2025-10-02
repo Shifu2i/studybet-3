@@ -45,11 +45,6 @@ export const getUserByUsername = (username: string): StoredUser | null => {
 export const createUser = (userData: Partial<StoredUser>): StoredUser => {
   const users = getUsers();
   
-  // Check if username already exists
-  if (userData.username && getUserByUsername(userData.username)) {
-    throw new Error('Username already exists');
-  }
-  
   const newUser: StoredUser = {
     id: crypto.randomUUID(),
     username: userData.username || '',
