@@ -42,8 +42,17 @@ export const useUserProfile = () => {
     const today = new Date().toISOString().split('T')[0];
     const lastReset = user.last_daily_reset;
 
-    if (lastReset !== today && user.balance < 100) {
-      await updateTokens(100, today);
+    // Reset to 100 tokens daily if balance is below 100
+    if (lastReset !== today) {
+      if (user.balance < 100) {
+        await updateTokens(100, today);
+      } else {
+        // Just update the reset date without changing balance
+        const updatedUser = updateUser(username, { last_daily_reset: today });
+        if (updatedUser) {
+          setProfile(updatedUser);
+        }
+      }
     }
   };
 
@@ -67,8 +76,20 @@ export const useUserProfile = () => {
 
   const addTokens = async (tokensToAdd: number) => {
     if (!profile) return;
+    
+    // Ensure tokens are properly added to current balance
     const newTotal = profile.balance + tokensToAdd;
-    await updateTokens(newTotal);
+    
+    // Update both balance and total winnings
+    const updatedUser = updateUser(username!, { 
+      balance: newTotal,
+      total_winnings: profile.total_winnings + tokensToAdd,
+      games_played: profile.games_played + 1
+    });
+    
+    if (updatedUser) {
+      setProfile(updatedUser);
+    }
   };
 
   return {

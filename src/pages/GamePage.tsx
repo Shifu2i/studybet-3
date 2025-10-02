@@ -95,7 +95,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     setIsSpinning(false);
     setLastSpinResult(result);
     
-    // Add tokens to user's balance
+    // Add tokens to user's balance - ensure proper stacking
     if (profile) {
       addTokens(result.tokens);
     }
@@ -103,7 +103,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     // Show next question after a delay
     setTimeout(() => {
       showRandomQuestion();
-    }, 2000);
+    }, 3000);
   };
 
 
@@ -131,6 +131,12 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
                 <span className="text-white font-bold text-lg">
                   {profile.balance.toLocaleString()} tokens
                 </span>
+              </div>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-2 border border-white/20">
+              <div className="text-white text-sm">
+                <div className="opacity-70">Total Won:</div>
+                <div className="font-semibold">{profile.total_winnings.toLocaleString()}</div>
               </div>
             </div>
             <div className="text-white">

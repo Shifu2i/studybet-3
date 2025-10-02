@@ -34,3 +34,6 @@ export interface WheelSegment {
   color: string;
   probability: number;
 }
+
+export interface StoredUser extends User {
+}

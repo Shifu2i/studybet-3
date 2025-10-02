@@ -21,9 +21,10 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({
   const spinWheel = useCallback(() => {
     if (!canSpin || isSpinning) return;
 
-    // Random force variation (3-7 full rotations)
-    const baseRotations = 3 + Math.random() * 4;
+    // More varied random force (2-8 full rotations with different speeds)
+    const baseRotations = 2 + Math.random() * 6;
     const randomAngle = Math.random() * 360;
+    const speedVariation = 0.8 + Math.random() * 0.4; // 0.8x to 1.2x speed
     const totalRotation = rotation + (baseRotations * 360) + randomAngle;
 
     setRotation(totalRotation);
@@ -34,10 +35,11 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({
     const selectedIndex = Math.floor(normalizedAngle / segmentAngle);
     const selectedSegment = segments[selectedIndex];
 
-    // Call onSpin after animation completes
+    // Call onSpin after animation completes (varied timing)
+    const animationDuration = 3000 * speedVariation;
     setTimeout(() => {
       onSpin(selectedSegment);
-    }, 3000);
+    }, animationDuration);
   }, [canSpin, isSpinning, rotation, segments, onSpin]);
 
   const segmentAngle = 360 / segments.length;

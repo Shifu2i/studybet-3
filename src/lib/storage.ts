@@ -44,17 +44,21 @@ export const getUserByUsername = (username: string): StoredUser | null => {
 // Create new user
 export const createUser = (userData: Partial<StoredUser>): StoredUser => {
   const users = getUsers();
+  
+  // Check if username already exists
+  if (userData.username && getUserByUsername(userData.username)) {
+    throw new Error('Username already exists');
+  }
+  
   const newUser: StoredUser = {
     id: crypto.randomUUID(),
     username: userData.username || '',
-    balance: 1000,
+    balance: 100, // Start with 100 tokens
     last_daily_reset: new Date().toISOString().split('T')[0],
     total_winnings: 0,
     games_played: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    email: userData.email,
-    password: userData.password,
   };
   
   users.push(newUser);
