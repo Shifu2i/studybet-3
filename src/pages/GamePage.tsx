@@ -1,32 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { LogOut, Trophy, Coins, RotateCcw } from 'lucide-react';
+import { LogOut, Trophy, Coins } from 'lucide-react';
 import { RouletteWheel } from '../components/RouletteWheel/RouletteWheel';
 import { BettingBoard } from '../components/BettingBoard/BettingBoard';
 import { useAuth } from '../hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
-import { WheelSegment } from '../types';
 
 interface GamePageProps {
   onNavigateToLeaderboard: () => void;
 }
 
-const wheelSegments: WheelSegment[] = [
-  { id: 1, label: '10', tokens: 10, color: '#FF6B6B', probability: 0.3 },
-  { id: 2, label: '25', tokens: 25, color: '#4ECDC4', probability: 0.25 },
-  { id: 3, label: '50', tokens: 50, color: '#45B7D1', probability: 0.2 },
-  { id: 4, label: '100', tokens: 100, color: '#96CEB4', probability: 0.15 },
-  { id: 5, label: '250', tokens: 250, color: '#FFEAA7', probability: 0.08 },
-  { id: 6, label: '500', tokens: 500, color: '#DDA0DD', probability: 0.02 },
-];
-
 export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) => {
   const { signOut } = useAuth();
-  const { profile, addTokens, updateTokens } = useUserProfile();
+  const { profile, updateTokens } = useUserProfile();
   const [isSpinning, setIsSpinning] = useState(false);
-  const [bets, setBets] = useState<Record<number, number>>({});
+  const [bets, setBets] = useState<Record<string, number>>({});
   const [lastSpinResult, setLastSpinResult] = useState<{
-    segment: WheelSegment;
+    number: string;
+    color: string;
     winnings: number;
     totalBet: number;
   } | null>(null);
@@ -34,11 +25,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
 
   const totalBetAmount = Object.values(bets).reduce((sum, bet) => sum + bet, 0);
 
-  const handlePlaceBet = (segmentId: number, amount: number) => {
+  const handlePlaceBet = (number: string, amount: number) => {
     if (!profile || isSpinning) return;
 
     setBets(prev => {
-      const currentBet = prev[segmentId] || 0;
+      const currentBet = prev[number] || 0;
       const newBet = Math.max(0, currentBet + amount);
       
       // Check if player has enough balance for the bet
@@ -51,7 +42,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
 
       return {
         ...prev,
-        [segmentId]: newBet,
+        [number]: newBet,
       };
     });
   };
@@ -62,24 +53,20 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     }
   };
 
-  const handleSpinComplete = (winningSegment: WheelSegment) => {
+  const handleSpinComplete = (result: { number: string; color: string; payout: number }) => {
     if (!profile) return;
 
-    const winningBet = bets[winningSegment.id] || 0;
-    const winnings = winningBet * winningSegment.tokens;
+    const winningBet = bets[result.number] || 0;
+    const winnings = winningBet * (result.payout + 1); // 35:1 payout means you get 36x your bet
     const netResult = winnings - totalBetAmount;
 
     // Update player balance
     const newBalance = profile.balance + netResult;
     updateTokens(newBalance);
 
-    // Update stats if player won
-    if (winnings > 0) {
-      addTokens(0); // This will increment games_played and update total_winnings if needed
-    }
-
     setLastSpinResult({
-      segment: winningSegment,
+      number: result.number,
+      color: result.color,
       winnings,
       totalBet: totalBetAmount,
     });
@@ -164,7 +151,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
           <div className="flex flex-col items-center">
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-6">
               <RouletteWheel
-                segments={wheelSegments}
                 onSpinComplete={handleSpinComplete}
                 isSpinning={isSpinning}
                 setIsSpinning={setIsSpinning}
@@ -192,11 +178,11 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
               >
                 <div className="text-center">
                   <div className="text-white text-lg font-bold mb-2">
-                    Landed on: {lastSpinResult.segment.tokens}
+                    Landed on: {lastSpinResult.number} ({lastSpinResult.color})
                   </div>
                   <div className="space-y-2">
                     <div className="text-white/80">
-                      Your bet: {bets[lastSpinResult.segment.id] || 0} tokens
+                      Your bet on {lastSpinResult.number}: {bets[lastSpinResult.number] || 0} tokens
                     </div>
                     <div className="text-white/80">
                       Total bet: {lastSpinResult.totalBet} tokens
@@ -226,7 +212,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
           {/* Betting Board */}
           <div>
             <BettingBoard
-              segments={wheelSegments}
               bets={bets}
               onPlaceBet={handlePlaceBet}
               onClearBets={handleClearBets}
@@ -236,25 +221,25 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
 
             {/* Game Instructions */}
             <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mt-6">
-              <h3 className="text-white text-lg font-bold mb-4">How to Play</h3>
+              <h3 className="text-white text-lg font-bold mb-4">American Roulette</h3>
               <div className="space-y-2 text-white/80 text-sm">
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                     1
                   </div>
-                  <p>Place bets on the numbers you think will win</p>
+                  <p>Place bets on any number (0, 00, 1-36)</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                     2
                   </div>
-                  <p>Spin the wheel when you're ready</p>
+                  <p>Spin the wheel when ready</p>
                 </div>
                 <div className="flex items-start gap-2">
                   <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 mt-0.5">
                     3
                   </div>
-                  <p>Win tokens equal to your bet × the number you hit</p>
+                  <p>Win 35:1 payout if your number hits!</p>
                 </div>
               </div>
             </div>
