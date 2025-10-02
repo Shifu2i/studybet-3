@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Trophy, Coins } from 'lucide-react';
 import { SpinningWheel } from '../components/SpinningWheel/SpinningWheel';
-import { SearchBar } from '../components/SearchBar/SearchBar';
-import { QuestionModal } from '../components/QuestionModal/QuestionModal';
 import { useAuth } from '../hooks/useAuth';
 import { useUserProfile } from '../hooks/useUserProfile';
 import { WheelSegment } from '../types';
@@ -57,39 +55,8 @@ const sampleQuestions = {
 export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) => {
   const { signOut } = useAuth();
   const { profile, addTokens } = useUserProfile();
-  const [selectedTopic, setSelectedTopic] = useState('Mathematics');
   const [isSpinning, setIsSpinning] = useState(false);
-  const [canSpin, setCanSpin] = useState(false);
-  const [showQuestion, setShowQuestion] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState('');
   const [lastSpinResult, setLastSpinResult] = useState<WheelSegment | null>(null);
-
-  useEffect(() => {
-    // Show initial question when component mounts
-    if (selectedTopic) {
-      showRandomQuestion();
-    }
-  }, [selectedTopic]);
-
-  const showRandomQuestion = () => {
-    const questions = sampleQuestions[selectedTopic as keyof typeof sampleQuestions] || sampleQuestions.Mathematics;
-    const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
-    setCurrentQuestion(randomQuestion);
-    setShowQuestion(true);
-    setCanSpin(false);
-  };
-
-  const handleQuestionAnswer = (_answer: string, isCorrect: boolean) => {
-    setShowQuestion(false);
-    setCanSpin(isCorrect);
-
-    if (!isCorrect) {
-      // Show another question if the answer was wrong
-      setTimeout(() => {
-        showRandomQuestion();
-      }, 1000);
-    }
-  };
 
   const handleSpin = (result: WheelSegment) => {
     setIsSpinning(false);
@@ -99,11 +66,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
     if (profile) {
       addTokens(result.tokens);
     }
-
-    // Show next question after a delay
-    setTimeout(() => {
-      showRandomQuestion();
-    }, 3000);
   };
 
 
@@ -167,16 +129,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
           </div>
         </div>
 
-        {/* Topic Selection */}
-        <div className="mb-8">
-          <h2 className="text-white text-xl font-semibold mb-4 text-center">
-            Choose Your Study Topic
-          </h2>
-          <SearchBar
-            onTopicSelect={setSelectedTopic}
-            selectedTopic={selectedTopic}
-          />
-        </div>
       </div>
 
       {/* Game Area */}
@@ -188,7 +140,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
               segments={wheelSegments}
               onSpin={handleSpin}
               isSpinning={isSpinning}
-              canSpin={canSpin}
+              canSpin={true}
             />
           </div>
 
@@ -201,7 +153,7 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
                   <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
                     1
                   </div>
-                  <p>Answer questions correctly to unlock spins</p>
+                  <p>Click the spin button to spin the wheel</p>
                 </div>
                 <div className="flex items-start gap-3">
                   <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-bold flex-shrink-0 mt-0.5">
@@ -235,15 +187,6 @@ export const GamePage: React.FC<GamePageProps> = ({ onNavigateToLeaderboard }) =
           </div>
         </div>
       </div>
-
-      {/* Question Modal */}
-      <QuestionModal
-        isOpen={showQuestion}
-        question={currentQuestion}
-        topic={selectedTopic}
-        onAnswer={handleQuestionAnswer}
-        onClose={() => setShowQuestion(false)}
-      />
     </div>
   );
 };

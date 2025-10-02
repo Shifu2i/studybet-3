@@ -135,7 +135,7 @@ export const SpinningWheel: React.FC<SpinningWheelProps> = ({
             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
         }`}
       >
-        {isSpinning ? 'Spinning...' : canSpin ? 'SPIN THE WHEEL' : 'Answer Question First'}
+        {isSpinning ? 'Spinning...' : 'SPIN THE WHEEL'}
       </motion.button>
     </div>
   );
