@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award, Crown, Users } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import { getLeaderboard } from '../../lib/storage';
 import { User } from '../../types';
 
 export const Leaderboard: React.FC = () => {
@@ -14,14 +14,8 @@ export const Leaderboard: React.FC = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('balance', { ascending: false })
-        .limit(10);
-
-      if (error) throw error;
-      setLeaders(data || []);
+      const leaderboardData = getLeaderboard(10);
+      setLeaders(leaderboardData);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {

@@ -1,18 +1,27 @@
 import { useState, useEffect } from 'react';
+import { getCurrentUser, setCurrentUser, removeCurrentUser, getUserByUsername, createUser } from '../lib/storage';
 
 export const useAuth = () => {
   const [username, setUsername] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
+    const storedUsername = getCurrentUser();
     setUsername(storedUsername);
     setLoading(false);
   }, []);
 
-  const signIn = async (usernameInput: string) => {
+  const signIn = async (usernameInput: string, password?: string) => {
     try {
-      localStorage.setItem('username', usernameInput);
+      // Check if user exists
+      let user = getUserByUsername(usernameInput);
+      
+      if (!user) {
+        // Create new user if doesn't exist
+        user = createUser({ username: usernameInput, password });
+      }
+      
+      setCurrentUser(usernameInput);
       setUsername(usernameInput);
       return { error: null };
     } catch (error: any) {
@@ -22,7 +31,7 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      localStorage.removeItem('username');
+      removeCurrentUser();
       setUsername(null);
       return { error: null };
     } catch (error: any) {

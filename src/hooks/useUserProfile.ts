@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '../types';
-import { supabase } from '../lib/supabase';
+import { getUserByUsername, updateUser } from '../lib/storage';
 import { useAuth } from './useAuth';
 
 export const useUserProfile = () => {
@@ -22,18 +22,9 @@ export const useUserProfile = () => {
     if (!username) return;
 
     try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (!data) {
-        await createProfile();
-      } else {
-        setProfile(data);
+      const user = getUserByUsername(username);
+      if (user) {
+        setProfile(user);
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -42,42 +33,22 @@ export const useUserProfile = () => {
     }
   };
 
-  const createProfile = async () => {
+  const checkDailyReset = async () => {
     if (!username) return;
 
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .insert([
-          {
-            username,
-            balance: 1000,
-            last_daily_reset: new Date().toISOString().split('T')[0],
-          },
-        ])
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error creating profile:', error);
-    }
-  };
-
-  const checkDailyReset = async () => {
-    if (!username || !profile) return;
+    const user = getUserByUsername(username);
+    if (!user) return;
 
     const today = new Date().toISOString().split('T')[0];
-    const lastReset = profile.last_daily_reset;
+    const lastReset = user.last_daily_reset;
 
-    if (lastReset !== today && profile.balance < 1000) {
-      await updateTokens(1000, today);
+    if (lastReset !== today && user.balance < 100) {
+      await updateTokens(100, today);
     }
   };
 
   const updateTokens = async (newTokens: number, resetDate?: string) => {
-    if (!username || !profile) return;
+    if (!username) return;
 
     try {
       const updateData: any = { balance: newTokens };
@@ -85,15 +56,10 @@ export const useUserProfile = () => {
         updateData.last_daily_reset = resetDate;
       }
 
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .update(updateData)
-        .eq('username', username)
-        .select()
-        .maybeSingle();
-
-      if (error) throw error;
-      setProfile(data);
+      const updatedUser = updateUser(username, updateData);
+      if (updatedUser) {
+        setProfile(updatedUser);
+      }
     } catch (error) {
       console.error('Error updating tokens:', error);
     }
