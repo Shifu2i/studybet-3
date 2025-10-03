@@ -44,16 +44,17 @@ export const getUserByUsername = (username: string): StoredUser | null => {
 // Create new user
 export const createUser = (userData: Partial<StoredUser>): StoredUser => {
   const users = getUsers();
-  
   const newUser: StoredUser = {
     id: crypto.randomUUID(),
     username: userData.username || '',
-    balance: 100, // Start with 100 tokens
+    balance: 1000,
     last_daily_reset: new Date().toISOString().split('T')[0],
     total_winnings: 0,
     games_played: 0,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
+    email: userData.email,
+    password: userData.password,
   };
   
   users.push(newUser);

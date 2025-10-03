@@ -11,21 +11,21 @@ export const useAuth = () => {
     setLoading(false);
   }, []);
 
-  const signIn = async (usernameInput: string) => {
+  const signIn = async (usernameInput: string, password?: string) => {
     try {
       // Check if user exists
       let user = getUserByUsername(usernameInput);
       
       if (!user) {
         // Create new user if doesn't exist
-        user = createUser({ username: usernameInput });
+        user = createUser({ username: usernameInput, password });
       }
       
       setCurrentUser(usernameInput);
       setUsername(usernameInput);
       return { error: null };
     } catch (error: any) {
-      return { error: error };
+      return { error };
     }
   };
 
