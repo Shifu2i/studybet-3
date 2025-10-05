@@ -60,24 +60,30 @@ export const useSupabaseAuth = () => {
 
   const createProfile = async (userId: string, username?: string) => {
     try {
+      const finalUsername = username || `user_${userId.slice(0, 8)}`;
+
       const { data, error } = await supabase
         .from('users')
         .insert({
           id: userId,
-          username: username || `user_${userId.slice(0, 8)}`,
-          auth_provider: 'google',
+          username: finalUsername,
+          auth_provider: username ? 'username' : 'google',
           email: user?.email,
-          display_name: user?.user_metadata?.full_name,
+          display_name: user?.user_metadata?.full_name || finalUsername,
           profile_avatar: user?.user_metadata?.avatar_url,
         })
         .select()
         .single();
 
-      if (error) throw error;
-      
+      if (error) {
+        if (error.code === '23505') {
+          throw new Error('Username already taken');
+        }
+        throw error;
+      }
+
       setProfile(data);
-      
-      // Create default user settings
+
       await supabase
         .from('user_settings')
         .insert({
@@ -86,6 +92,7 @@ export const useSupabaseAuth = () => {
 
     } catch (error) {
       console.error('Error creating profile:', error);
+      throw error;
     }
   };
 
@@ -99,35 +106,12 @@ export const useSupabaseAuth = () => {
 
   const signInWithUsername = async (username: string) => {
     try {
-      // Check if username exists
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('username', username)
-        .single();
+      const { data, error } = await supabase.auth.signInAnonymously();
+      if (error) throw error;
 
-      if (existingUser) {
-        // Sign in existing user (create a session)
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) throw error;
+      if (!data.user) throw new Error('No user returned');
 
-        if (!data.user) throw new Error('No user returned');
-
-        await supabase
-          .from('users')
-          .update({ id: data.user.id })
-          .eq('username', username);
-
-        await fetchProfile(data.user.id);
-      } else {
-        // Create new user
-        const { data, error } = await supabase.auth.signInAnonymously();
-        if (error) throw error;
-
-        if (!data.user) throw new Error('No user returned');
-
-        await createProfile(data.user.id, username);
-      }
+      await createProfile(data.user.id, username);
     } catch (error) {
       console.error('Error signing in with username:', error);
       throw error;
