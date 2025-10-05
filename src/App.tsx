@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { AuthForm } from './components/Auth/AuthForm';
 import { GamePage } from './pages/GamePage';
 import { Leaderboard } from './components/Leaderboard/Leaderboard';

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Wheel } from 'react-custom-roulette';
 import { motion } from 'framer-motion';
 
@@ -6,20 +6,20 @@ interface RouletteWheelProps {
   onSpinComplete: (result: { number: string; color: string; payout: number }) => void;
   isSpinning: boolean;
   setIsSpinning: (spinning: boolean) => void;
+  canSpin: boolean;
+  onSpinRequest: () => void;
 }
 
 // Traditional American Roulette wheel data with proper colors
+const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
+
 const createRouletteData = () => {
-  const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-  const blackNumbers = [2, 4, 6, 8, 10, 11, 13, 15, 17, 20, 22, 24, 26, 28, 29, 31, 33, 35];
-  
   const segments = [];
-  
-  // Add 0 (green)
+
   segments.push({
     option: '0',
-    style: { 
-      backgroundColor: '#008000', 
+    style: {
+      backgroundColor: '#008000',
       textColor: '#ffffff',
       fontSize: 16
     },
@@ -27,12 +27,11 @@ const createRouletteData = () => {
     color: 'green',
     payout: 35
   });
-  
-  // Add 00 (green)
+
   segments.push({
     option: '00',
-    style: { 
-      backgroundColor: '#008000', 
+    style: {
+      backgroundColor: '#008000',
       textColor: '#ffffff',
       fontSize: 16
     },
@@ -40,21 +39,15 @@ const createRouletteData = () => {
     color: 'green',
     payout: 35
   });
-  
-  // Add numbers 1-36
+
   for (let i = 1; i <= 36; i++) {
-    let backgroundColor = '#000000'; // black
-    let color = 'black';
-    
-    if (redNumbers.includes(i)) {
-      backgroundColor = '#DC143C'; // red
-      color = 'red';
-    }
-    
+    const backgroundColor = redNumbers.includes(i) ? '#DC143C' : '#000000';
+    const color = redNumbers.includes(i) ? 'red' : 'black';
+
     segments.push({
       option: i.toString(),
-      style: { 
-        backgroundColor, 
+      style: {
+        backgroundColor,
         textColor: '#ffffff',
         fontSize: 16
       },
@@ -63,25 +56,27 @@ const createRouletteData = () => {
       payout: 35
     });
   }
-  
+
   return segments;
 };
+
+const rouletteData = createRouletteData();
 
 export const RouletteWheel: React.FC<RouletteWheelProps> = ({
   onSpinComplete,
   isSpinning,
   setIsSpinning,
+  canSpin,
+  onSpinRequest,
 }) => {
   const [prizeNumber, setPrizeNumber] = useState(0);
-  const rouletteData = createRouletteData();
 
-  const handleSpinClick = () => {
-    if (!isSpinning) {
+  useEffect(() => {
+    if (isSpinning && prizeNumber === 0) {
       const newPrizeNumber = Math.floor(Math.random() * rouletteData.length);
       setPrizeNumber(newPrizeNumber);
-      setIsSpinning(true);
     }
-  };
+  }, [isSpinning, prizeNumber]);
 
   const handleStopSpinning = useCallback(() => {
     setIsSpinning(false);
@@ -91,6 +86,7 @@ export const RouletteWheel: React.FC<RouletteWheelProps> = ({
       color: winningSegment.color,
       payout: winningSegment.payout
     });
+    setPrizeNumber(0);
   }, [prizeNumber, rouletteData, onSpinComplete, setIsSpinning]);
 
   return (
@@ -117,12 +113,12 @@ export const RouletteWheel: React.FC<RouletteWheelProps> = ({
       </div>
 
       <motion.button
-        whileHover={{ scale: isSpinning ? 1 : 1.05 }}
-        whileTap={{ scale: isSpinning ? 1 : 0.95 }}
-        onClick={handleSpinClick}
-        disabled={isSpinning}
+        whileHover={{ scale: canSpin && !isSpinning ? 1.05 : 1 }}
+        whileTap={{ scale: canSpin && !isSpinning ? 0.95 : 1 }}
+        onClick={onSpinRequest}
+        disabled={!canSpin || isSpinning}
         className={`mt-8 px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 ${
-          !isSpinning
+          canSpin && !isSpinning
             ? 'bg-gradient-to-r from-red-600 to-red-800 text-white hover:from-red-700 hover:to-red-900 shadow-lg'
             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
         }`}

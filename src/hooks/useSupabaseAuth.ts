@@ -20,7 +20,7 @@ export const useSupabaseAuth = () => {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (_event, session) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -110,19 +110,22 @@ export const useSupabaseAuth = () => {
         // Sign in existing user (create a session)
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) throw error;
-        
-        // Update the user record with the new auth ID
+
+        if (!data.user) throw new Error('No user returned');
+
         await supabase
           .from('users')
           .update({ id: data.user.id })
           .eq('username', username);
-          
+
         await fetchProfile(data.user.id);
       } else {
         // Create new user
         const { data, error } = await supabase.auth.signInAnonymously();
         if (error) throw error;
-        
+
+        if (!data.user) throw new Error('No user returned');
+
         await createProfile(data.user.id, username);
       }
     } catch (error) {
@@ -161,7 +164,7 @@ export const useSupabaseAuth = () => {
     if (!profile) return;
 
     try {
-      const { data, error } = await supabase.rpc('update_user_tokens', {
+      const { error } = await supabase.rpc('update_user_tokens', {
         p_user_id: profile.id,
         p_new_amount: newAmount,
         p_transaction_type: type,

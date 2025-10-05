@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { LogOut, Trophy, Coins, Settings, Brain, Target } from 'lucide-react';
 import { RouletteWheel } from '../components/RouletteWheel/RouletteWheel';
@@ -24,6 +24,10 @@ export const GamePage: React.FC<GamePageProps> = ({
   const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [questionLoading, setQuestionLoading] = useState(false);
+  const [pendingQuestionResult, setPendingQuestionResult] = useState<{
+    isCorrect: boolean;
+    answerId: string;
+  } | null>(null);
   const [lastSpinResult, setLastSpinResult] = useState<{
     number: string;
     color: string;
@@ -65,12 +69,11 @@ export const GamePage: React.FC<GamePageProps> = ({
 
   const handleSpinRequest = () => {
     if (!profile || totalBetAmount === 0 || totalBetAmount > profile.current_tokens) return;
-    
+
     if (currentPrompt) {
       setShowQuestionModal(true);
     } else {
-      // No question selected, proceed with spin (reduced payout)
-      handleSpinComplete({ number: '0', color: 'green', payout: 35 });
+      setIsSpinning(true);
     }
   };
 
@@ -101,12 +104,13 @@ export const GamePage: React.FC<GamePageProps> = ({
 
       if (answerError) throw answerError;
 
+      setPendingQuestionResult({
+        isCorrect,
+        answerId: answerData.id
+      });
+
       setShowQuestionModal(false);
-      
-      // Proceed with spin, passing question result
-      setTimeout(() => {
-        handleSpinComplete({ number: '0', color: 'green', payout: 35 }, isCorrect, answerData.id);
-      }, 500);
+      setIsSpinning(true);
 
     } catch (error) {
       console.error('Error evaluating answer:', error);
@@ -139,31 +143,34 @@ export const GamePage: React.FC<GamePageProps> = ({
     );
   };
 
-  const handleSpinComplete = async (
-    result: { number: string; color: string; payout: number }, 
-    questionCorrect?: boolean,
-    answerId?: string
-  ) => {
+  const handleSpinComplete = async (result: { number: string; color: string; payout: number }) => {
     if (!profile) return;
 
     const winningBet = bets[result.number] || 0;
     const baseWinnings = winningBet * (result.payout + 1);
-    
-    // Apply question bonus/penalty
+
+    let questionCorrect: boolean | undefined = undefined;
+    let answerId: string | undefined = undefined;
+
+    if (pendingQuestionResult) {
+      questionCorrect = pendingQuestionResult.isCorrect;
+      answerId = pendingQuestionResult.answerId;
+      setPendingQuestionResult(null);
+    }
+
     let actualPayout = 0;
     if (questionCorrect === true) {
-      actualPayout = baseWinnings; // Full payout
+      actualPayout = baseWinnings;
     } else if (questionCorrect === false) {
-      actualPayout = Math.floor(baseWinnings * 0.3); // 30% payout for wrong answer
+      actualPayout = Math.floor(baseWinnings * 0.3);
     } else {
-      actualPayout = Math.floor(baseWinnings * 0.5); // 50% payout for no question
+      actualPayout = Math.floor(baseWinnings * 0.5);
     }
 
     const netResult = actualPayout - totalBetAmount;
 
     try {
-      // Record the spin
-      const { data: spinData, error: spinError } = await supabase
+      const { error: spinError } = await supabase
         .from('spins')
         .insert({
           user_id: profile.id,
@@ -178,13 +185,10 @@ export const GamePage: React.FC<GamePageProps> = ({
           prompt_id: currentPrompt?.id,
           answer_id: answerId,
           wheel_type: 'american'
-        })
-        .select()
-        .single();
+        });
 
       if (spinError) throw spinError;
 
-      // Update user tokens
       const newBalance = profile.current_tokens + netResult;
       await updateTokens(newBalance, netResult > 0 ? 'payout' : 'bet', `Spin result: ${result.number}`);
 

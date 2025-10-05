@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Medal, Award, Crown, Users } from 'lucide-react';
-import { getLeaderboard } from '../../lib/storage';
-import { User } from '../../types';
+import { supabase, User } from '../../lib/supabase';
 
 export const Leaderboard: React.FC = () => {
   const [leaders, setLeaders] = useState<User[]>([]);
@@ -14,8 +13,14 @@ export const Leaderboard: React.FC = () => {
 
   const fetchLeaderboard = async () => {
     try {
-      const leaderboardData = getLeaderboard(10);
-      setLeaders(leaderboardData);
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('current_tokens', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+      setLeaders(data || []);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
     } finally {
@@ -99,13 +104,16 @@ export const Leaderboard: React.FC = () => {
                     </div>
                     
                     <div>
-                      <h3 className="text-xl font-bold text-white">{user.username}</h3>
+                      <h3 className="text-xl font-bold text-white">{user.display_name || user.username}</h3>
+                      {user.display_name && (
+                        <p className="text-white/60 text-sm">@{user.username}</p>
+                      )}
                     </div>
                   </div>
 
                   <div className="text-right">
                     <div className="text-3xl font-bold text-white mb-1">
-                      {user.balance.toLocaleString()}
+                      {user.current_tokens.toLocaleString()}
                     </div>
                     <div className="text-white/60 text-sm">tokens</div>
                   </div>
