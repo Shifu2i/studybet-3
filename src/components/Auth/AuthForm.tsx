@@ -27,10 +27,13 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     }
 
     try {
+      console.log('Attempting to sign in with username:', username.trim());
       await signInWithUsername(username.trim());
+      console.log('Sign in successful');
       onSuccess();
     } catch (error: any) {
-      setError(error.message || 'Failed to sign in');
+      console.error('Sign in error:', error);
+      setError(error.message || 'Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }

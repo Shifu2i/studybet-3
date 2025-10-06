@@ -106,14 +106,26 @@ export const useSupabaseAuth = () => {
 
   const signInWithUsername = async (username: string) => {
     try {
+      console.log('Starting anonymous sign in...');
       const { data, error } = await supabase.auth.signInAnonymously();
-      if (error) throw error;
 
-      if (!data.user) throw new Error('No user returned');
+      if (error) {
+        console.error('Anonymous sign in error:', error);
+        throw error;
+      }
+
+      if (!data.user) {
+        console.error('No user data returned from anonymous sign in');
+        throw new Error('No user returned');
+      }
+
+      console.log('Anonymous sign in successful, user ID:', data.user.id);
+      console.log('Creating profile for username:', username);
 
       await createProfile(data.user.id, username);
+      console.log('Profile created successfully');
     } catch (error) {
-      console.error('Error signing in with username:', error);
+      console.error('Error in signInWithUsername:', error);
       throw error;
     }
   };
