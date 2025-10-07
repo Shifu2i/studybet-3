@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Mail, LogIn } from 'lucide-react';
+import { User, LogIn } from 'lucide-react';
 import { useSupabaseAuth } from '../../hooks/useSupabaseAuth';
 
 interface AuthFormProps {
@@ -11,24 +11,42 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [authMode, setAuthMode] = useState<'username' | 'google'>('username');
-
-  const { signInWithUsername, signInWithGoogle } = useSupabaseAuth();
+  const { signInWithUsername } = useSupabaseAuth();
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    if (!username.trim()) {
+    const trimmedUsername = username.trim();
+
+    if (!trimmedUsername) {
       setError('Username is required');
       setLoading(false);
       return;
     }
 
+    if (trimmedUsername.length < 3) {
+      setError('Username must be at least 3 characters');
+      setLoading(false);
+      return;
+    }
+
+    if (trimmedUsername.length > 20) {
+      setError('Username must be 20 characters or less');
+      setLoading(false);
+      return;
+    }
+
+    if (!/^[a-zA-Z0-9_-]+$/.test(trimmedUsername)) {
+      setError('Username can only contain letters, numbers, underscores, and hyphens');
+      setLoading(false);
+      return;
+    }
+
     try {
-      console.log('Attempting to sign in with username:', username.trim());
-      await signInWithUsername(username.trim());
+      console.log('Attempting to sign in with username:', trimmedUsername);
+      await signInWithUsername(trimmedUsername);
       console.log('Sign in successful');
       onSuccess();
     } catch (error: any) {
@@ -39,18 +57,6 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     }
   };
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setError('');
-
-    try {
-      await signInWithGoogle();
-      // Note: Google OAuth will redirect, so onSuccess will be called after redirect
-    } catch (error: any) {
-      setError(error.message || 'Failed to sign in with Google');
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-cyan-900 to-blue-900 flex items-center justify-center p-4">
@@ -75,32 +81,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
         )}
 
         <div className="space-y-4">
-          {/* Auth Mode Toggle */}
-          <div className="flex bg-white/5 rounded-lg p-1">
-            <button
-              onClick={() => setAuthMode('username')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMode === 'username'
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/60 hover:text-white/80'
-              }`}
-            >
-              Username
-            </button>
-            <button
-              onClick={() => setAuthMode('google')}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
-                authMode === 'google'
-                  ? 'bg-white/20 text-white'
-                  : 'text-white/60 hover:text-white/80'
-              }`}
-            >
-              Google
-            </button>
-          </div>
-
-          {authMode === 'username' ? (
-            <form onSubmit={handleUsernameSubmit} className="space-y-4">
+          <form onSubmit={handleUsernameSubmit} className="space-y-4">
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/50 w-5 h-5" />
                 <input
@@ -124,19 +105,18 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                 {loading ? 'Signing In...' : 'Start Learning'}
               </motion.button>
             </form>
-          ) : (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleGoogleSignIn}
-              disabled={loading}
-              className="w-full bg-white text-gray-900 font-semibold py-3 rounded-lg hover:bg-gray-100 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
-            >
-              <Mail className="w-4 h-4" />
-              {loading ? 'Signing In...' : 'Continue with Google'}
-            </motion.button>
-          )}
-        </div>
+
+            <div className="mt-4 p-4 bg-white/5 rounded-lg border border-white/10">
+              <p className="text-white/70 text-xs">
+                <strong>Username Requirements:</strong>
+              </p>
+              <ul className="text-white/60 text-xs mt-2 space-y-1">
+                <li>• 3-20 characters long</li>
+                <li>• Letters, numbers, underscores, and hyphens only</li>
+                <li>• No spaces or special characters</li>
+              </ul>
+            </div>
+          </div>
 
         <div className="mt-6 text-center text-white/60 text-sm">
           <p>Join thousands of learners spinning their way to knowledge!</p>

@@ -132,25 +132,77 @@ export const useSupabaseAuth = () => {
     }
   };
 
+  const validateUsername = (username: string): { valid: boolean; error?: string } => {
+    if (!username || username.length < 3) {
+      return { valid: false, error: 'Username must be at least 3 characters' };
+    }
+    if (username.length > 20) {
+      return { valid: false, error: 'Username must be 20 characters or less' };
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+      return { valid: false, error: 'Username can only contain letters, numbers, underscores, and hyphens' };
+    }
+    return { valid: true };
+  };
+
   const signInWithUsername = async (username: string) => {
     try {
+      const sanitizedUsername = username.trim().toLowerCase();
+
+      const validation = validateUsername(sanitizedUsername);
+      if (!validation.valid) {
+        throw new Error(validation.error);
+      }
+
+      console.log('Checking rate limit for username:', sanitizedUsername);
+      const { data: rateLimitCheck, error: rateLimitError } = await supabase.rpc(
+        'check_login_rate_limit',
+        { p_username: sanitizedUsername }
+      );
+
+      if (rateLimitError) {
+        console.error('Rate limit check error:', rateLimitError);
+      }
+
+      if (rateLimitCheck === false) {
+        await supabase.rpc('record_login_attempt', {
+          p_username: sanitizedUsername,
+          p_success: false,
+        });
+        throw new Error('Too many login attempts. Please try again in 15 minutes.');
+      }
+
       console.log('Starting anonymous sign in...');
       const { data, error } = await supabase.auth.signInAnonymously();
 
       if (error) {
         console.error('Anonymous sign in error:', error);
+        await supabase.rpc('record_login_attempt', {
+          p_username: sanitizedUsername,
+          p_success: false,
+        });
         throw error;
       }
 
       if (!data.user) {
         console.error('No user data returned from anonymous sign in');
+        await supabase.rpc('record_login_attempt', {
+          p_username: sanitizedUsername,
+          p_success: false,
+        });
         throw new Error('No user returned');
       }
 
       console.log('Anonymous sign in successful, user ID:', data.user.id);
-      console.log('Creating profile for username:', username);
+      console.log('Creating profile for username:', sanitizedUsername);
 
-      await createProfile(data.user.id, username);
+      await createProfile(data.user.id, sanitizedUsername);
+
+      await supabase.rpc('record_login_attempt', {
+        p_username: sanitizedUsername,
+        p_success: true,
+      });
+
       console.log('Profile created successfully');
     } catch (error) {
       console.error('Error in signInWithUsername:', error);
@@ -158,20 +210,6 @@ export const useSupabaseAuth = () => {
     }
   };
 
-  const signInWithGoogle = async () => {
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin,
-        },
-      });
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error signing in with Google:', error);
-      throw error;
-    }
-  };
 
   const signOut = async () => {
     try {
@@ -210,7 +248,6 @@ export const useSupabaseAuth = () => {
     profile,
     loading,
     signInWithUsername,
-    signInWithGoogle,
     signOut,
     updateTokens,
     refetchProfile: () => profile && fetchProfile(profile.id),
