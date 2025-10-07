@@ -8,19 +8,36 @@ export const useSupabaseAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('useSupabaseAuth: Initializing...');
+
+    // Timeout fallback to prevent infinite loading
+    const timeout = setTimeout(() => {
+      console.warn('Auth initialization timeout - setting loading to false');
+      setLoading(false);
+    }, 10000);
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        console.log('Initial session:', session ? 'Found' : 'None');
+        clearTimeout(timeout);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch((error) => {
+        console.error('Error getting session:', error);
+        clearTimeout(timeout);
         setLoading(false);
-      }
-    });
+      });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        console.log('Auth state changed:', _event, session ? 'Session exists' : 'No session');
         setUser(session?.user ?? null);
         if (session?.user) {
           await fetchProfile(session.user.id);
@@ -31,28 +48,39 @@ export const useSupabaseAuth = () => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log('Fetching profile for user:', userId);
       const { data, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code === 'PGRST116') {
-        // User doesn't exist, create profile
-        await createProfile(userId);
-      } else if (error) {
+      console.log('Profile fetch result:', { data, error });
+
+      if (error) {
+        console.error('Error fetching profile:', error);
         throw error;
+      }
+
+      if (!data) {
+        console.log('No profile found, creating new profile');
+        await createProfile(userId);
       } else {
+        console.log('Profile found:', data);
         setProfile(data);
         await checkDailyReset(data);
       }
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in fetchProfile:', error);
+      setLoading(false);
     } finally {
       setLoading(false);
     }
