@@ -11,6 +11,7 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { signInWithUsername } = useSupabaseAuth();
 
   const handleUsernameSubmit = async (e: React.FormEvent) => {
@@ -47,12 +48,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
     try {
       console.log('Attempting to sign in with username:', trimmedUsername);
       await signInWithUsername(trimmedUsername);
-      console.log('Sign in successful');
-      onSuccess();
+      console.log('Sign in successful - tokens linked, redirecting to game...');
+      setSuccess(true);
+      // The auth state change will automatically trigger navigation
+      // Show success message briefly
+      setTimeout(() => {
+        onSuccess();
+      }, 500);
     } catch (error: any) {
       console.error('Sign in error:', error);
       setError(error.message || 'Failed to sign in. Please try again.');
-    } finally {
       setLoading(false);
     }
   };
@@ -80,6 +85,12 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
           </div>
         )}
 
+        {success && (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-3 mb-4">
+            <p className="text-green-200 text-sm">Welcome! Loading your game with 100 tokens...</p>
+          </div>
+        )}
+
         <div className="space-y-4">
           <form onSubmit={handleUsernameSubmit} className="space-y-4">
               <div className="relative">
@@ -98,11 +109,11 @@ export const AuthForm: React.FC<AuthFormProps> = ({ onSuccess }) => {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
-                disabled={loading}
+                disabled={loading || success}
                 className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white font-semibold py-3 rounded-lg hover:from-cyan-700 hover:to-blue-700 transition-all duration-200 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <LogIn className="w-4 h-4" />
-                {loading ? 'Signing In...' : 'Start Learning'}
+                {success ? 'Success! Redirecting...' : loading ? 'Signing In...' : 'Start Learning'}
               </motion.button>
             </form>
 

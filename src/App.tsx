@@ -19,7 +19,10 @@ function App() {
   }
 
   if (!user || !profile) {
-    return <AuthForm onSuccess={() => window.location.reload()} />;
+    return <AuthForm onSuccess={() => {
+      console.log('Auth successful, user should now be loaded');
+      // No need to reload - the auth state change will trigger re-render
+    }} />;
   }
 
   return (
